@@ -11,7 +11,7 @@ servicio para un vehículo.
 
 ## Instalación y ejecución
 
-1. Instalar las dependencias:a
+1. Instalar las dependencias:
 
 ```bash
 npm install
