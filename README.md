@@ -1,7 +1,8 @@
 # AutoFix App
 
 Aplicación móvil para gestionar solicitudes de un taller mecánico.
-Permitir registrarse, iniciar sesión y enviar solicitudes de servicio para un vehículo.
+Permitir registrarse, iniciar sesión y enviar solicitudes de
+servicio para un vehículo.
 
 ## Tecnologías
 
@@ -40,8 +41,7 @@ autofix-app/
 │       ├── LoginScreen.tsx      # Inicio de sesión
 │       ├── HomeScreen.tsx       # Pantalla principal
 │       └── RegisterScreen.tsx   # Formulario de registro
-├── index.tsx                  # Navegación y estado central
-├── _layout.tsx             # Dependencias y scripts
+├── _layout.tsx              # Estructura general de la navegación
 └── README.md                # Documentación
 ```
 
