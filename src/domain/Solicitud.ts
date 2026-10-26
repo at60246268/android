@@ -2,12 +2,12 @@ export type TipoServicioAuto =
   | "Mantenimiento Preventivo"
   | "Sistema de Frenos"
   | "Diagnóstico de Motor"
-  | "Sistema Electrico"
+  | "Sistema Eléctrico"
   | "Suspensión y Dirección";
 
-export type PrioridadAuto = "Alta" | "Media" | "Urgente";
+export type PrioridadAuto = "Baja" | "Media" | "Urgente";
 
-export type EstadoAuto = "Pendiente" | "En Proceso" | "Finalizado";
+export type EstadoAuto = "PENDIENTE" | "EN_REVISION" | "FINALIZADO";
 
 export interface SolicitudAuto {
   id: string;

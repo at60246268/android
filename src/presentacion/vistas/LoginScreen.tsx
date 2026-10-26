@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-<<<<<<< HEAD
 import {
     KeyboardAvoidingView,
     Platform,
@@ -7,26 +6,14 @@ import {
     Text,
     View,
 } from "react-native";
-=======
-import {KeyboardAvoidingView, Platform, StyleSheet, Text, View} from "react-native";
->>>>>>> main
-import { CustomButton } from "../components/CustomButton";
-import { CustomInput } from "../components/CustomInput";
+import { CustomButton } from "../componentes/CustomButton";
+import { CustomInput } from "../componentes/CustomInput";
 
 interface LoginScreenProps {
-<<<<<<< HEAD
   onLoginSuccess: (usuario: string) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-=======
-  onLoginSuccess: (usuario: string) => void; //Función que se ejecuta cuando el usuario inicia sesión correctamente
-}
-
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-
-  // Estados para manejar los campos de usuario, contraseña y errores
->>>>>>> main
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [errores, setErrores] = useState<{
@@ -37,10 +24,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const handleIngresar = () => {
     const err: { usuario?: string; password?: string } = {};
 
-<<<<<<< HEAD
-=======
-    // Validación de campos vacíos
->>>>>>> main
     if (!usuario.trim()) {
       err.usuario = "El campo usuario es obligatorio.";
     }
@@ -58,28 +41,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-<<<<<<< HEAD
-=======
-
-    // KeyboardAvoidingView para manejar el teclado en dispositivos móviles
->>>>>>> main
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-<<<<<<< HEAD
-=======
-    // Vista principal que contiene la tarjeta de inicio de sesión
->>>>>>> main
       <View style={styles.card}>
-        <Text style={styles.brand}> AutoFix Manager</Text>
+        <Text style={styles.brand}>🔧 AutoFix Manager</Text>
         <Text style={styles.title}>Iniciar Sesión</Text>
         <Text style={styles.subtitle}>Gestión de Solicitudes y Taller</Text>
-<<<<<<< HEAD
 
-=======
-    // Componente personalizado para el usuario
->>>>>>> main
         <CustomInput
           label="Usuario / Técnico"
           placeholder="Ej. mecanico01"
@@ -88,11 +58,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           error={errores.usuario}
           autoCapitalize="none"
         />
-<<<<<<< HEAD
 
-=======
-    // Componente personalizado para la contraseña
->>>>>>> main
         <CustomInput
           label="Contraseña"
           placeholder="••••••••"
@@ -101,11 +67,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           secureTextEntry
           error={errores.password}
         />
-<<<<<<< HEAD
 
-=======
-    // Botón personalizado para ingresar al sistema
->>>>>>> main
         <View style={styles.btnWrapper}>
           <CustomButton title="Ingresar al Sistema" onPress={handleIngresar} />
         </View>
@@ -114,10 +76,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   );
 };
 
-<<<<<<< HEAD
-=======
-// Estilos para los componentes de la pantalla de inicio de sesión
->>>>>>> main
 const styles = StyleSheet.create({
   container: {
     flex: 1,
