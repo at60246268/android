@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
-import { CustomButton } from "../components/CustomButton";
-import { CustomInput } from "../components/CustomInput";
-import { SolicitudAuto, TipoServicioAuto } from "../models/Solicitud";
+import { SolicitudAuto, TipoServicioAuto } from "../../domain/Solicitud";
+import { CustomButton } from "../componentes/CustomButton";
+import { CustomInput } from "../componentes/CustomInput";
 
 interface RegisterScreenProps {
   onBack: () => void;
-  onSave: (solicitud: SolicitudAuto) => void;
+  onSave: (nueva: SolicitudAuto) => void;
 }
 
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({
@@ -29,59 +29,52 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     descripcion?: string;
   }>({});
 
-  const validar = (): boolean => {
+  const handleGuardar = () => {
     const err: typeof errores = {};
 
-    if (!clienteNombre.trim()) {
+    if (!clienteNombre.trim())
       err.clienteNombre = "El nombre del cliente es obligatorio.";
-    }
-    if (!telefono.trim()) {
-      err.telefono = "El teléfono de contacto es obligatorio.";
-    } else if (telefono.trim().length < 9) {
-      err.telefono = "Ingrese un número válido (mínimo 9 dígitos).";
-    }
-    if (!vehiculoPlaca.trim()) {
+    if (!telefono.trim()) err.telefono = "El teléfono es obligatorio.";
+    else if (telefono.trim().length < 9)
+      err.telefono = "El teléfono debe tener mínimo 9 dígitos.";
+    if (!vehiculoPlaca.trim())
       err.vehiculoPlaca = "La placa del vehículo es obligatoria.";
-    }
-    if (!descripcion.trim()) {
-      err.descripcion = "La descripción del requerimiento es obligatoria.";
-    }
+    if (!descripcion.trim())
+      err.descripcion = "La descripción de la falla es obligatoria.";
 
-    setErrores(err);
-    return Object.keys(err).length === 0;
-  };
-
-  const handleGuardar = () => {
-    if (!validar()) return;
+    if (Object.keys(err).length > 0) {
+      setErrores(err);
+      return;
+    }
 
     const nuevaSolicitud: SolicitudAuto = {
       id: Date.now().toString(),
       clienteNombre,
       telefono,
-      vehiculoPlaca: vehiculoPlaca.toUpperCase(),
-      vehiculoModelo: vehiculoModelo || "No especificado",
+      vehiculoPlaca,
+      vehiculoModelo: vehiculoModelo || "Sin especificar",
       tipoServicio,
       prioridad: "Media",
       descripcion,
-      estado: "Pendiente",
+      estado: "PENDIENTE",
       fechaRegistro: new Date().toLocaleDateString(),
     };
 
     onSave(nuevaSolicitud);
-    Alert.alert("Éxito", "Solicitud registrada correctamente en el taller.");
+    Alert.alert("Éxito", "Solicitud registrada correctamente.");
     onBack();
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Registrar Entrada a Taller</Text>
+      <Text style={styles.title}>Registro de Solicitud</Text>
       <Text style={styles.subtitle}>
-        Complete los datos del vehículo y cliente
+        Complete los datos del cliente y vehículo
       </Text>
 
       <CustomInput
         label="Nombre del Cliente *"
-        placeholder="Ej. Carlos Mendoza"
+        placeholder="Ej. Juan Pérez"
         value={clienteNombre}
         onChangeText={setClienteNombre}
         error={errores.clienteNombre}
@@ -106,22 +99,15 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
       />
 
       <CustomInput
-        label="Modelo / Marca del Auto"
-        placeholder="Ej. Toyota Corolla 2020"
+        label="Modelo del Vehículo"
+        placeholder="Ej. Toyota Corolla 2021"
         value={vehiculoModelo}
         onChangeText={setVehiculoModelo}
       />
 
       <CustomInput
-        label="Tipo de Solicitud / Servicio *"
-        placeholder="Ej. Mantenimiento Preventivo / Frenos"
-        value={tipoServicio}
-        onChangeText={(txt) => setTipoServicio(txt as TipoServicioAuto)}
-      />
-
-      <CustomInput
         label="Descripción de la Falla *"
-        placeholder="Describa el trabajo o síntoma presentado..."
+        placeholder="Detalle los síntomas o reparación requerida"
         multiline
         numberOfLines={3}
         value={descripcion}
@@ -129,7 +115,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
         error={errores.descripcion}
       />
 
-      <View style={styles.actions}>
+      <View style={styles.btnGroup}>
         <CustomButton title="Guardar Solicitud" onPress={handleGuardar} />
         <CustomButton title="Cancelar" variant="secondary" onPress={onBack} />
       </View>
@@ -145,7 +131,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#0f172a",
   },
@@ -154,8 +140,7 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginBottom: 20,
   },
-  actions: {
+  btnGroup: {
     marginTop: 10,
-    marginBottom: 30,
   },
 });
