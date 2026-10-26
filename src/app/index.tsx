@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { SafeAreaView, StatusBar, StyleSheet } from "react-native";
-import { SolicitudAuto } from "../models/Solicitud";
-import { HomeScreen } from "../screens/HomeScreen";
-import { LoginScreen } from "../screens/LoginScreen";
-import { RegisterScreen } from "../screens/RegisterScreen";
+import { SolicitudAuto } from "../domain/Solicitud";
+import { HomeScreen } from "../presentacion/vistas/HomeScreen";
+import { LoginScreen } from "../presentacion/vistas/LoginScreen";
+import { RegisterScreen } from "../presentacion/vistas/RegisterScreen";
 
 export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
