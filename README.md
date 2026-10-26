@@ -1,7 +1,8 @@
 # AutoFix App
 
 Aplicación móvil para gestionar solicitudes de un taller mecánico.
-Permitir registrarse, iniciar sesión y enviar solicitudes de servicio para un vehículo.
+Permitir registrarse, iniciar sesión y enviar solicitudes de
+servicio para un vehículo.
 
 ## Tecnologías
 
