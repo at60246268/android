@@ -1,51 +1,110 @@
-import React, { createContext, useContext, useReducer } from "react";
-import { SolicitudAuto } from "../../domain/Solicitud";
+import React, { createContext, useContext, useReducer } from 'react';
+import { SolicitudAuto, EstadoAuto } from '../../domain/Solicitud';
 
-interface SolicitudesState {
+type State = {
   solicitudes: SolicitudAuto[];
-}
+};
 
-type SolicitudesAction =
-  | { type: "AGREGAR_SOLICITUD"; payload: SolicitudAuto }
-  | { type: "ELIMINAR_SOLICITUD"; payload: string }
-  | { type: "ACTUALIZAR_SOLICITUD"; payload: SolicitudAuto };
+type Action =
+  | { type: 'ADD_SOLICITUD'; payload: SolicitudAuto }
+  | { type: 'UPDATE_SOLICITUD'; payload: SolicitudAuto }
+  | { type: 'CHANGE_ESTADO'; payload: { id: string; nuevoEstado: EstadoAuto } }
+  | { type: 'DELETE_SOLICITUD'; payload: string };
 
-const solicitudesReducer = (state: SolicitudesState, action: SolicitudesAction): SolicitudesState => {
+const solicitudesIniciales: SolicitudAuto[] = [
+  {
+    id: '1',
+    clienteNombre: 'Carlos Mendoza',
+    telefono: '987654321',
+    vehiculoPlaca: 'ABC-123',
+    vehiculoModelo: 'Toyota Corolla 2021',
+    tipoServicio: 'Mantenimiento Preventivo',
+    prioridad: 'Media',
+    descripcion: 'Cambio de aceite, filtro y revisión de fluidos generales.',
+    estado: 'PENDIENTE',
+    fechaRegistro: '02/11/2026',
+  },
+  {
+    id: '2',
+    clienteNombre: 'Ana Torres',
+    telefono: '912345678',
+    vehiculoPlaca: 'XYZ-789',
+    vehiculoModelo: 'Nissan Sentra 2019',
+    tipoServicio: 'Sistema de Frenos',
+    prioridad: 'Urgente',
+    descripcion: 'Chirrido agudo al frenar y pedal esponjoso.',
+    estado: 'EN_PROCESO',
+    fechaRegistro: '01/11/2026',
+  },
+];
+
+function solicitudesReducer(state: State, action: Action): State {
   switch (action.type) {
-    case "AGREGAR_SOLICITUD":
+    case 'ADD_SOLICITUD':
+      return { ...state, solicitudes: [action.payload, ...state.solicitudes] };
+    case 'UPDATE_SOLICITUD':
       return {
         ...state,
-        solicitudes: [action.payload, ...state.solicitudes],
+        solicitudes: state.solicitudes.map((s) =>
+          s.id === action.payload.id ? action.payload : s
+        ),
       };
-    case "ELIMINAR_SOLICITUD":
+    case 'CHANGE_ESTADO':
       return {
         ...state,
-        solicitudes: state.solicitudes.filter(s => s.id !== action.payload),
+        solicitudes: state.solicitudes.map((s) =>
+          s.id === action.payload.id ? { ...s, estado: action.payload.nuevoEstado } : s
+        ),
       };
-    case "ACTUALIZAR_SOLICITUD":
+    case 'DELETE_SOLICITUD':
       return {
         ...state,
-        solicitudes: state.solicitudes.map(s => s.id === action.payload.id ? action.payload : s),
+        solicitudes: state.solicitudes.filter((s) => s.id !== action.payload),
       };
     default:
       return state;
   }
-};
+}
 
-const initialState: SolicitudesState = {
-  solicitudes: [],
-};
+interface SolicitudesContextProps {
+  solicitudes: SolicitudAuto[];
+  agregarSolicitud: (solicitud: SolicitudAuto) => void;
+  actualizarSolicitud: (solicitud: SolicitudAuto) => void;
+  cambiarEstado: (id: string, nuevoEstado: EstadoAuto) => void;
+  eliminarSolicitud: (id: string) => void;
+}
 
-const SolicitudesContext = createContext<{
-  state: SolicitudesState;
-  dispatch: React.Dispatch<SolicitudesAction>;
-} | undefined>(undefined);
+const SolicitudesContext = createContext<SolicitudesContextProps | undefined>(undefined);
 
 export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(solicitudesReducer, initialState);
+  const [state, dispatch] = useReducer(solicitudesReducer, { solicitudes: solicitudesIniciales });
+
+  const agregarSolicitud = (solicitud: SolicitudAuto) => {
+    dispatch({ type: 'ADD_SOLICITUD', payload: solicitud });
+  };
+
+  const actualizarSolicitud = (solicitud: SolicitudAuto) => {
+    dispatch({ type: 'UPDATE_SOLICITUD', payload: solicitud });
+  };
+
+  const cambiarEstado = (id: string, nuevoEstado: EstadoAuto) => {
+    dispatch({ type: 'CHANGE_ESTADO', payload: { id, nuevoEstado } });
+  };
+
+  const eliminarSolicitud = (id: string) => {
+    dispatch({ type: 'DELETE_SOLICITUD', payload: id });
+  };
 
   return (
-    <SolicitudesContext.Provider value={{ state, dispatch }}>
+    <SolicitudesContext.Provider
+      value={{
+        solicitudes: state.solicitudes,
+        agregarSolicitud,
+        actualizarSolicitud,
+        cambiarEstado,
+        eliminarSolicitud,
+      }}
+    >
       {children}
     </SolicitudesContext.Provider>
   );
@@ -53,8 +112,6 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 export const useSolicitudes = () => {
   const context = useContext(SolicitudesContext);
-  if (!context) {
-    throw new Error("useSolicitudes debe usarse dentro de un SolicitudesProvider");
-  }
+  if (!context) throw new Error('useSolicitudes debe usarse dentro de SolicitudesProvider');
   return context;
 };

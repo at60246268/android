@@ -10,7 +10,7 @@ interface RegisterScreenProps {
 }
 
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onBack }) => {
-  const { dispatch } = useSolicitudes();
+  const { agregarSolicitud } = useSolicitudes();
 
   const [clienteNombre, setClienteNombre] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -59,10 +59,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onBack }) => {
       fechaRegistro: new Date().toLocaleDateString(),
     };
 
-    dispatch({
-      type: "AGREGAR_SOLICITUD",
-      payload: nuevaSolicitud,
-    });
+    agregarSolicitud(nuevaSolicitud);
 
     Alert.alert("Éxito", "Solicitud registrada correctamente.");
     onBack();
