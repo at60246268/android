@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { SafeAreaView, StatusBar, StyleSheet } from "react-native";
 import { AuthProvider, useAuth } from "../infrastructura/context/AuthContext";
+import { SolicitudesProvider } from "../infrastructura/context/SolicitudesContext";
 import { HomeScreen } from "../presentacion/vistas/HomeScreen";
 import { LoginScreen } from "../presentacion/vistas/LoginScreen";
 import { RegisterScreen } from "../presentacion/vistas/RegisterScreen";
@@ -8,6 +9,7 @@ import { RegisterUserScreen } from "../presentacion/vistas/RegisterUserScreen";
 
 function AppNavigator() {
   const { state } = useAuth();
+  
   const [pantallaAuth, setPantallaAuth] = useState<"login" | "register-user">("login");
   const [pantallaActual, setPantallaActual] = useState<"home" | "register">("home");
 
@@ -17,24 +19,15 @@ function AppNavigator() {
 
       {!state.isLoggedIn ? (
         pantallaAuth === "register-user" ? (
-          <RegisterUserScreen
-            onBackToLogin={() => setPantallaAuth("login")}
-          />
+          <RegisterUserScreen onBackToLogin={() => setPantallaAuth("login")} />
         ) : (
-          <LoginScreen
-            onNavigateToRegisterUser={() => setPantallaAuth("register-user")}
-          />
+          <LoginScreen onNavigateToRegisterUser={() => setPantallaAuth("register-user")} />
         )
       ) : (
-
         pantallaActual === "home" ? (
-          <HomeScreen
-            onNavigateToRegister={() => setPantallaActual("register")}
-          />
+          <HomeScreen onNavigateToRegister={() => setPantallaActual("register")} />
         ) : (
-          <RegisterScreen
-            onBack={() => setPantallaActual("home")}
-          />
+          <RegisterScreen onBack={() => setPantallaActual("home")} />
         )
       )}
     </SafeAreaView>
@@ -44,7 +37,9 @@ function AppNavigator() {
 export default function Index() {
   return (
     <AuthProvider>
-      <AppNavigator />
+      <SolicitudesProvider>
+        <AppNavigator />
+      </SolicitudesProvider>
     </AuthProvider>
   );
 }
