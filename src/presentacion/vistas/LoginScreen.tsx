@@ -1,19 +1,18 @@
 import React, { useState } from "react";
-import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 import { CustomButton } from "../componentes/CustomButton";
 import { CustomInput } from "../componentes/CustomInput";
+import { useAuth } from "../../infrastructura/context/AuthContext";
 
 interface LoginScreenProps {
-  onLoginSuccess: (usuario: string) => void;
+  onNavigateToRegisterUser: () => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ 
+  onNavigateToRegisterUser 
+}) => {
+  const { state, dispatch } = useAuth();
+
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [errores, setErrores] = useState<{
@@ -36,8 +35,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       return;
     }
 
+    const usuarioEncontrado = state.usuariosRegistrados.find(
+      (u) => u.usuario === usuario.trim() && u.password === password
+    );
+
+    if (!usuarioEncontrado) {
+      Alert.alert("Error de acceso", "Usuario o contraseña incorrectos.");
+      return;
+    }
+
     setErrores({});
-    onLoginSuccess(usuario);
+    
+    dispatch({ type: "LOGIN", payload: usuario.trim() });
   };
 
   return (
@@ -70,6 +79,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
         <View style={styles.btnWrapper}>
           <CustomButton title="Ingresar al Sistema" onPress={handleIngresar} />
+          
+          <CustomButton 
+            title="¿No tienes cuenta? Regístrate" 
+            variant="secondary" 
+            onPress={onNavigateToRegisterUser} 
+          />
         </View>
       </View>
     </KeyboardAvoidingView>

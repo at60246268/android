@@ -1,65 +1,49 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { SafeAreaView, StatusBar, StyleSheet } from "react-native";
-import { SolicitudAuto } from "../domain/Solicitud";
+import { AuthProvider, useAuth } from "../infrastructura/context/AuthContext";
+import { SolicitudesProvider } from "../infrastructura/context/SolicitudesContext";
 import { HomeScreen } from "../presentacion/vistas/HomeScreen";
 import { LoginScreen } from "../presentacion/vistas/LoginScreen";
 import { RegisterScreen } from "../presentacion/vistas/RegisterScreen";
+import { RegisterUserScreen } from "../presentacion/vistas/RegisterUserScreen";
 
-export default function Index() {
-  // Estado de la aplicación
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  // Estado del usuario actual y la pantalla actual
-  const [usuarioActual, setUsuarioActual] = useState<string>("");
-  const [pantallaActual, setPantallaActual] = useState<"home" | "register">(
-    "home",
-  );
-  // Estado de las solicitudes
-  const [solicitudes, setSolicitudes] = useState<SolicitudAuto[]>([]);
-
-  // Funciones para manejar el login, logout y guardar solicitudes
-  const handleLogin = (user: string) => {
-    setUsuarioActual(user);
-    setIsLoggedIn(true);
-    setPantallaActual("home");
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsuarioActual("");
-    setPantallaActual("home");
-  };
-
-  const handleGuardarSolicitud = (nueva: SolicitudAuto) => {
-    setSolicitudes((prev) => [nueva, ...prev]);
-  };
+function AppNavigator() {
+  const { state } = useAuth();
+  
+  const [pantallaAuth, setPantallaAuth] = useState<"login" | "register-user">("login");
+  const [pantallaActual, setPantallaActual] = useState<"home" | "register">("home");
 
   return (
     <SafeAreaView style={styles.container}>
-    // Configuración de la barra de estado según el estado de login
-      <StatusBar barStyle={isLoggedIn ? "dark-content" : "light-content"} />
-      {!isLoggedIn ? (
-        // Renderiza la pantalla de login si no está logueado
-        <LoginScreen onLoginSuccess={handleLogin} />
-      ) : pantallaActual === "home" ? (
-        // Renderiza la pantalla de inicio si está logueado y en la pantalla de inicio
-        <HomeScreen
-          usuario={usuarioActual}
-          totalSolicitudes={solicitudes.length}
-          onNavigateToRegister={() => setPantallaActual("register")}
-          onLogout={handleLogout}
-        />
+      <StatusBar barStyle={state.isLoggedIn ? "dark-content" : "light-content"} />
+
+      {!state.isLoggedIn ? (
+        pantallaAuth === "register-user" ? (
+          <RegisterUserScreen onBackToLogin={() => setPantallaAuth("login")} />
+        ) : (
+          <LoginScreen onNavigateToRegisterUser={() => setPantallaAuth("register-user")} />
+        )
       ) : (
-        // Renderiza la pantalla de registro si está logueado y en la pantalla de registro
-        <RegisterScreen
-          onBack={() => setPantallaActual("home")}
-          onSave={handleGuardarSolicitud}
-        />
+        pantallaActual === "home" ? (
+          <HomeScreen onNavigateToRegister={() => setPantallaActual("register")} />
+        ) : (
+          <RegisterScreen onBack={() => setPantallaActual("home")} />
+        )
       )}
     </SafeAreaView>
   );
 }
 
-// Estilos para la aplicación
+export default function Index() {
+  return (
+    <AuthProvider>
+      <SolicitudesProvider>
+        <AppNavigator />
+      </SolicitudesProvider>
+    </AuthProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
