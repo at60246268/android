@@ -1,33 +1,30 @@
-import React, { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
-import { CustomButton } from "../componentes/CustomButton";
-import { CustomInput } from "../componentes/CustomInput";
-import { useAuth } from "../../infrastructura/context/AuthContext";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { CustomInput } from '../componentes/CustomInput';
+import { CustomButton } from '../componentes/CustomButton';
 
+// 1. Agregar la propiedad opcional u obligatoria a las Props
 interface LoginScreenProps {
-  onNavigateToRegisterUser: () => void;
+  onLoginSuccess: (usuario: string) => void;
+  onNavigateToRegisterUser?: () => void; // <--- Agregado aquí
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ 
-  onNavigateToRegisterUser 
+export const LoginScreen: React.FC<LoginScreenProps> = ({
+  onLoginSuccess,
+  onNavigateToRegisterUser,
 }) => {
-  const { state, dispatch } = useAuth();
-
-  const [usuario, setUsuario] = useState("");
-  const [password, setPassword] = useState("");
-  const [errores, setErrores] = useState<{
-    usuario?: string;
-    password?: string;
-  }>({});
+  const [usuario, setUsuario] = useState('');
+  const [password, setPassword] = useState('');
+  const [errores, setErrores] = useState<{ usuario?: string; password?: string }>({});
 
   const handleIngresar = () => {
     const err: { usuario?: string; password?: string } = {};
 
     if (!usuario.trim()) {
-      err.usuario = "El campo usuario es obligatorio.";
+      err.usuario = 'El campo usuario es obligatorio.';
     }
     if (!password.trim()) {
-      err.password = "El campo contraseña es obligatorio.";
+      err.password = 'El campo contraseña es obligatorio.';
     }
 
     if (Object.keys(err).length > 0) {
@@ -35,23 +32,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
-    const usuarioEncontrado = state.usuariosRegistrados.find(
-      (u) => u.usuario === usuario.trim() && u.password === password
-    );
-
-    if (!usuarioEncontrado) {
-      Alert.alert("Error de acceso", "Usuario o contraseña incorrectos.");
-      return;
-    }
-
     setErrores({});
-    
-    dispatch({ type: "LOGIN", payload: usuario.trim() });
+    onLoginSuccess(usuario);
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
       <View style={styles.card}>
@@ -80,11 +67,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <View style={styles.btnWrapper}>
           <CustomButton title="Ingresar al Sistema" onPress={handleIngresar} />
           
-          <CustomButton 
-            title="¿No tienes cuenta? Regístrate" 
-            variant="secondary" 
-            onPress={onNavigateToRegisterUser} 
-          />
+          {/* Botón/Enlace opcional para ir al Registro de Nuevo Usuario */}
+          {onNavigateToRegisterUser && (
+            <TouchableOpacity onPress={onNavigateToRegisterUser} style={styles.registerLink}>
+              <Text style={styles.registerText}>¿No tienes cuenta? Regístrate aquí</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -94,34 +82,44 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f172a",
-    justifyContent: "center",
+    backgroundColor: '#0f172a',
+    justifyContent: 'center',
     padding: 20,
   },
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 24,
     elevation: 5,
   },
   brand: {
-    color: "#ea580c",
+    color: '#ea580c',
     fontSize: 14,
-    fontWeight: "800",
-    textTransform: "uppercase",
+    fontWeight: '800',
+    textTransform: 'uppercase',
     marginBottom: 4,
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#0f172a",
+    fontWeight: 'bold',
+    color: '#0f172a',
   },
   subtitle: {
     fontSize: 14,
-    color: "#64748b",
+    color: '#64748b',
     marginBottom: 20,
   },
   btnWrapper: {
     marginTop: 10,
+    gap: 12,
+  },
+  registerLink: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  registerText: {
+    color: '#ea580c',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
