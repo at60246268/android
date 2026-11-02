@@ -4,13 +4,12 @@ import { SolicitudAuto } from "../domain/Solicitud";
 import { HomeScreen } from "../presentacion/vistas/HomeScreen";
 import { LoginScreen } from "../presentacion/vistas/LoginScreen";
 import { RegisterScreen } from "../presentacion/vistas/RegisterScreen";
+import { RegisterUserScreen } from "../presentacion/vistas/RegisterUserScreen";
 
 export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [usuarioActual, setUsuarioActual] = useState<string>("");
-  const [pantallaActual, setPantallaActual] = useState<"home" | "register">(
-    "home",
-  );
+  const [pantallaActual, setPantallaActual] = useState<"home" | "register" | "register-user">("home",);
   const [solicitudes, setSolicitudes] = useState<SolicitudAuto[]>([]);
 
   const handleLogin = (user: string) => {
@@ -33,20 +32,30 @@ export default function Index() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isLoggedIn ? "dark-content" : "light-content"} />
       {!isLoggedIn ? (
-        <LoginScreen onLoginSuccess={handleLogin} />
-      ) : pantallaActual === "home" ? (
-        <HomeScreen
-          usuario={usuarioActual}
-          totalSolicitudes={solicitudes.length}
-          onNavigateToRegister={() => setPantallaActual("register")}
-          onLogout={handleLogout}
+      pantallaActual === "register-user" ? (
+        <RegisterUserScreen
+          onBackToLogin={() => setPantallaActual("home")}
+          onRegisterSuccess={() => setPantallaActual("home")}
         />
       ) : (
-        <RegisterScreen
-          onBack={() => setPantallaActual("home")}
-          onSave={handleGuardarSolicitud}
+        <LoginScreen 
+          onLoginSuccess={handleLogin}
+          onNavigateToRegisterUser={() => setPantallaActual("register-user")}
         />
-      )}
+      )
+    ) : pantallaActual === "home" ? (
+      <HomeScreen
+        usuario={usuarioActual}
+        totalSolicitudes={solicitudes.length}
+        onNavigateToRegister={() => setPantallaActual("register")}
+        onLogout={handleLogout}
+      />
+    ) : (
+      <RegisterScreen
+        onBack={() => setPantallaActual("home")}
+        onSave={handleGuardarSolicitud}
+      />
+    )}
     </SafeAreaView>
   );
 }

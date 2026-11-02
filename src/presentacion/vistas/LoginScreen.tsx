@@ -11,9 +11,10 @@ import { CustomInput } from "../componentes/CustomInput";
 
 interface LoginScreenProps {
   onLoginSuccess: (usuario: string) => void;
+  onNavigateToRegisterUser: () => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToRegisterUser }) => {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [errores, setErrores] = useState<{
@@ -46,7 +47,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       style={styles.container}
     >
       <View style={styles.card}>
-        <Text style={styles.brand}>🔧 AutoFix Manager</Text>
+        <Text style={styles.brand}>AutoFix Manager</Text>
         <Text style={styles.title}>Iniciar Sesión</Text>
         <Text style={styles.subtitle}>Gestión de Solicitudes y Taller</Text>
 
@@ -70,6 +71,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
         <View style={styles.btnWrapper}>
           <CustomButton title="Ingresar al Sistema" onPress={handleIngresar} />
+          <CustomButton 
+            title="¿No tienes cuenta? Regístrate" 
+            variant="secondary" 
+            onPress={onNavigateToRegisterUser}
+          />
         </View>
       </View>
     </KeyboardAvoidingView>
