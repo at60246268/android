@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { CustomButton } from "../componentes/CustomButton";
+import { useAuth } from "../../infrastructura/context/AuthContext";
+import { useSolicitudes } from "../../infrastructura/context/SolicitudesContext";
 
 interface HomeScreenProps {
-  usuario: string;
-  totalSolicitudes: number;
   onNavigateToRegister: () => void;
-  onLogout: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
-  usuario,
-  totalSolicitudes,
   onNavigateToRegister,
-  onLogout,
 }) => {
+  const { state: authState, dispatch: authDispatch } = useAuth(); 
+  const { state: solicitudesState } = useSolicitudes();
   const [saludo, setSaludo] = useState("");
 
   useEffect(() => {
@@ -28,17 +26,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   }, []);
 
+  const handleCerrarSesion = () => {
+    authDispatch({ type: "LOGOUT" });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.brand}>🚗 AutoFix - Servicio Automotriz</Text>
         <Text style={styles.saludo}>{saludo}</Text>
-        <Text style={styles.usuario}>Bienvenido, {usuario}</Text>
+        <Text style={styles.usuario}>Bienvenido, {authState.usuarioActual}</Text>
       </View>
 
       <View style={styles.kpiCard}>
         <Text style={styles.kpiLabel}>Vehículos en Registro / Taller</Text>
-        <Text style={styles.kpiValue}>{totalSolicitudes}</Text>
+        <Text style={styles.kpiValue}>{solicitudesState.solicitudes.length}</Text>
         <Text style={styles.kpiSub}>
           Solicitudes activas registradas en memoria
         </Text>
@@ -53,7 +55,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <CustomButton
           title="Cerrar Sesión"
           variant="secondary"
-          onPress={onLogout}
+          onPress={handleCerrarSesion}
         />
       </View>
     </View>

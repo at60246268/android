@@ -3,22 +3,21 @@ import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SolicitudAuto, TipoServicioAuto } from "../../domain/Solicitud";
 import { CustomButton } from "../componentes/CustomButton";
 import { CustomInput } from "../componentes/CustomInput";
+import { useSolicitudes } from "../../infrastructura/context/SolicitudesContext";
 
 interface RegisterScreenProps {
   onBack: () => void;
-  onSave: (nueva: SolicitudAuto) => void;
 }
 
-export const RegisterScreen: React.FC<RegisterScreenProps> = ({
-  onBack,
-  onSave,
-}) => {
+export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onBack }) => {
+  const { dispatch } = useSolicitudes();
+
   const [clienteNombre, setClienteNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [vehiculoPlaca, setVehiculoPlaca] = useState("");
   const [vehiculoModelo, setVehiculoModelo] = useState("");
   const [tipoServicio, setTipoServicio] = useState<TipoServicioAuto>(
-    "Mantenimiento Preventivo",
+    "Mantenimiento Preventivo"
   );
   const [descripcion, setDescripcion] = useState("");
 
@@ -60,7 +59,11 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
       fechaRegistro: new Date().toLocaleDateString(),
     };
 
-    onSave(nuevaSolicitud);
+    dispatch({
+      type: "AGREGAR_SOLICITUD",
+      payload: nuevaSolicitud,
+    });
+
     Alert.alert("Éxito", "Solicitud registrada correctamente.");
     onBack();
   };

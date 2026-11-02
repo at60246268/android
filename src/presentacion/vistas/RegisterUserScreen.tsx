@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View, ScrollView, Alert,} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View, ScrollView, Alert } from "react-native";
 import { CustomButton } from "../componentes/CustomButton";
 import { CustomInput } from "../componentes/CustomInput";
+import { useAuth } from "../../infrastructura/context/AuthContext";
 
 interface RegisterUserScreenProps {
   onBackToLogin: () => void;
-  onRegisterSuccess: (usuario: string) => void;
 }
 
 export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
   onBackToLogin,
-  onRegisterSuccess,
 }) => {
+  const { dispatch } = useAuth();
+
   const [nombre, setNombre] = useState("");
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
@@ -48,8 +49,18 @@ export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
     }
 
     setErrores({});
-    Alert.alert("Éxito", "Cuenta creada correctamente.");
-    onRegisterSuccess(usuario);
+
+    dispatch({
+      type: "REGISTRAR_USUARIO",
+      payload: {
+        usuario: usuario.trim(),
+        password: password,
+        nombre: nombre.trim(),
+      },
+    });
+
+    Alert.alert("Éxito", "Cuenta creada correctamente. Ya puedes iniciar sesión.");
+    onBackToLogin();
   };
 
   return (
@@ -59,9 +70,9 @@ export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.card}>
-          <Text style={styles.brand}>AutoFix Manager</Text>
+          <Text style={styles.brand}>🔧 AutoFix Manager</Text>
           <Text style={styles.title}>Crear Cuenta</Text>
-          <Text style={styles.subtitle}>Regístrate como nuevo usuario</Text>
+          <Text style={styles.subtitle}>Regístrate como nuevo técnico</Text>
 
           <CustomInput
             label="Nombre Completo"
@@ -100,7 +111,11 @@ export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
 
           <View style={styles.btnWrapper}>
             <CustomButton title="Registrarse" onPress={handleRegistrar} />
-            <CustomButton title="Volver al Login" variant="secondary" onPress={onBackToLogin} />
+            <CustomButton
+              title="Volver al Login"
+              variant="secondary"
+              onPress={onBackToLogin}
+            />
           </View>
         </View>
       </ScrollView>
