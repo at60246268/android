@@ -88,7 +88,11 @@ function AppContent() {
   );
 }
 
+<<<<<<< HEAD
+//  AQUÍ ESTÁ LA CLAVE: Envolver todo dentro de AuthProvider y SolicitudesProvider
+=======
 // ⚠️ AQUÍ ESTÁ LA CLAVE: Envolver todo dentro de AuthProvider y SolicitudesProvider
+>>>>>>> main
 export default function Index() {
   return (
     <AuthProvider>

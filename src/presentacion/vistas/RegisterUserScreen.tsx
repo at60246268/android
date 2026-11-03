@@ -70,7 +70,11 @@ export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.card}>
+<<<<<<< HEAD
+          <Text style={styles.brand}> AutoFix Manager</Text>
+=======
           <Text style={styles.brand}>🔧 AutoFix Manager</Text>
+>>>>>>> main
           <Text style={styles.title}>Crear Cuenta</Text>
           <Text style={styles.subtitle}>Regístrate como nuevo técnico</Text>
 

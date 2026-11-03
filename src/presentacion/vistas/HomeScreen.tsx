@@ -29,7 +29,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+<<<<<<< HEAD
+        <Text style={styles.brand}> AutoFix - Servicio Automotriz</Text>
+=======
         <Text style={styles.brand}>🚗 AutoFix - Servicio Automotriz</Text>
+>>>>>>> main
         <Text style={styles.saludo}>{saludo}</Text>
         <Text style={styles.usuario}>Bienvenido, {usuario}</Text>
       </View>
@@ -42,8 +46,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       <View style={styles.actions}>
         <Text style={styles.actionsTitle}>Panel de Control</Text>
+<<<<<<< HEAD
+        <CustomButton title=" Ver Solicitudes (Lista)" onPress={onNavigateToList} />
+        <CustomButton title=" Registrar Nueva Solicitud" onPress={onNavigateToRegister} />
+=======
         <CustomButton title="📋 Ver Solicitudes (Lista)" onPress={onNavigateToList} />
         <CustomButton title="🚘 Registrar Nueva Solicitud" onPress={onNavigateToRegister} />
+>>>>>>> main
         <CustomButton title="Cerrar Sesión" variant="secondary" onPress={onLogout} />
       </View>
     </View>
