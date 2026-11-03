@@ -1,59 +1,107 @@
-import { useState } from "react";
-import { SafeAreaView, StatusBar, StyleSheet } from "react-native";
-import { SolicitudAuto } from "../models/Solicitud";
-import { HomeScreen } from "../screens/HomeScreen";
-import { LoginScreen } from "../screens/LoginScreen";
-import { RegisterScreen } from "../screens/RegisterScreen";
+import React, { useState } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 
-export default function Index() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [usuarioActual, setUsuarioActual] = useState<string>("");
-  const [pantallaActual, setPantallaActual] = useState<"home" | "register">(
-    "home",
-  );
-  const [solicitudes, setSolicitudes] = useState<SolicitudAuto[]>([]);
+// Importación de Contextos / Providers
+import { AuthProvider } from '../infrastructura/context/AuthContext';
+import { SolicitudesProvider } from '../infrastructura/context/SolicitudesContext';
 
-  const handleLogin = (user: string) => {
-    setUsuarioActual(user);
-    setIsLoggedIn(true);
-    setPantallaActual("home");
-  };
+// Importación de Pantallas
+import { LoginScreen } from '../presentacion/vistas/LoginScreen';
+import { HomeScreen } from '../presentacion/vistas/HomeScreen';
+import { RegisterUserScreen } from '../presentacion/vistas/RegisterUserScreen';
+import { SolicitudFormScreen } from '../presentacion/vistas/SolicitudFormScreen';
+import { SolicitudesListScreen } from '../presentacion/vistas/SolicitudesListScreen';
+import { SolicitudDetailScreen } from '../presentacion/vistas/SolicitudDetailScreen';
+import { SolicitudAuto } from '../domain/Solicitud';
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsuarioActual("");
-    setPantallaActual("home");
-  };
+function AppContent() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [usuarioActual, setUsuarioActual] = useState('');
+  const [vistaActual, setVistaActual] = useState<'home' | 'list' | 'create' | 'detail' | 'registerUser'>('home');
+  const [solicitudSeleccionada, setSolicitudSeleccionada] = useState<SolicitudAuto | null>(null);
 
-  const handleGuardarSolicitud = (nueva: SolicitudAuto) => {
-    setSolicitudes((prev) => [nueva, ...prev]);
-  };
+  if (!isLoggedIn) {
+    if (vistaActual === 'registerUser') {
+      return <RegisterUserScreen onBackToLogin={() => setVistaActual('home')} />;
+    }
+    return (
+      <LoginScreen
+        onLoginSuccess={(u) => {
+          setUsuarioActual(u);
+          setIsLoggedIn(true);
+          setVistaActual('home');
+        }}
+        onNavigateToRegisterUser={() => setVistaActual('registerUser')}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle={isLoggedIn ? "dark-content" : "light-content"} />
-      {!isLoggedIn ? (
-        <LoginScreen onLoginSuccess={handleLogin} />
-      ) : pantallaActual === "home" ? (
+      <StatusBar barStyle="dark-content" />
+
+      {vistaActual === 'home' && (
         <HomeScreen
           usuario={usuarioActual}
-          totalSolicitudes={solicitudes.length}
-          onNavigateToRegister={() => setPantallaActual("register")}
-          onLogout={handleLogout}
+          totalSolicitudes={0}
+          onNavigateToList={() => setVistaActual('list')}
+          onNavigateToRegister={() => {
+            setSolicitudSeleccionada(null);
+            setVistaActual('create');
+          }}
+          onLogout={() => setIsLoggedIn(false)}
         />
-      ) : (
-        <RegisterScreen
-          onBack={() => setPantallaActual("home")}
-          onSave={handleGuardarSolicitud}
+      )}
+
+      {vistaActual === 'list' && (
+        <SolicitudesListScreen
+          onBack={() => setVistaActual('home')}
+          onNewSolicitud={() => {
+            setSolicitudSeleccionada(null);
+            setVistaActual('create');
+          }}
+          onSelectSolicitud={(item) => {
+            setSolicitudSeleccionada(item);
+            setVistaActual('detail');
+          }}
+        />
+      )}
+
+      {vistaActual === 'create' && (
+        <SolicitudFormScreen
+          solicitudAEditar={solicitudSeleccionada}
+          onBack={() => setVistaActual('list')}
+        />
+      )}
+
+      {vistaActual === 'detail' && solicitudSeleccionada && (
+        <SolicitudDetailScreen
+          solicitud={solicitudSeleccionada}
+          onBack={() => setVistaActual('list')}
+          onEdit={(item) => {
+            setSolicitudSeleccionada(item);
+            setVistaActual('create');
+          }}
         />
       )}
     </SafeAreaView>
   );
 }
 
+//  AQUÍ ESTÁ LA CLAVE: Envolver todo dentro de AuthProvider y SolicitudesProvider
+export default function Index() {
+  return (
+    <AuthProvider>
+      <SolicitudesProvider>
+        <AppContent />
+      </SolicitudesProvider>
+    </AuthProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: '#f8fafc',
   },
 });

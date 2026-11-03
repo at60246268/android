@@ -1,7 +1,8 @@
 # AutoFix App
 
 Aplicación móvil para gestionar solicitudes de un taller mecánico.
-Permitir registrarse, iniciar sesión y enviar solicitudes de servicio para un vehículo.
+Permitir registrarse, iniciar sesión y enviar solicitudes de
+servicio para un vehículo.
 
 ## Tecnologías
 
@@ -31,18 +32,22 @@ El código está organizado bajo el principio de separación de responsabilidade
 ```text
 autofix-app/
 ├── src/
-│   ├── components/          # Componentes reutilizables
-│   │   ├── CustomButton.tsx     # Botón táctil con variantes
-│   │   └── CustomInput.tsx      # Campo de texto con labels y errores
-│   ├── models/              # Interfaces y tipos de TypeScript
+│   ├── app/
+│   │   └── index.tsx            # Navegación y estado central
+│   ├── domain/
 │   │   └── Solicitud.ts         # Datos de la solicitud automotriz
-│   └── screens/             # Pantallas de la aplicación
-│       ├── LoginScreen.tsx      # Inicio de sesión
-│       ├── HomeScreen.tsx       # Pantalla principal
-│       └── RegisterScreen.tsx   # Formulario de registro
-├── index.tsx                  # Navegación y estado central
-├── _layout.tsx             # Dependencias y scripts
-└── README.md                # Documentación
+│   ├── presentacion/
+│   │   ├── componentes/         # Componentes reutilizables
+│   │   │   ├── CustomButton.tsx # Botón táctil con variantes
+│   │   │   └── CustomInput.tsx  # Campo de texto con labels y errores
+│   │   └── vistas/              # Pantallas de la aplicación
+│   │       ├── LoginScreen.tsx      # Inicio de sesión
+│   │       ├── HomeScreen.tsx       # Pantalla principal
+│   │       └── RegisterScreen.tsx   # Formulario de registro
+│   ├── shared/
+│   │   └── theme.ts             # Estilos y tema compartidos
+│   └── global.css
+└── README.md                    # Documentación
 ```
 
 ## Equipo

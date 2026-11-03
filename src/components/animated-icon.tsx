@@ -8,6 +8,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
+/** Controla la transición de la Splash Screen nativa a la app con animaciones */
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -86,6 +87,7 @@ const logoKeyframe = new Keyframe({
   },
 });
 
+/** Renderiza el logotipo animado con efectos de escala, brillo y rotación */
 const glowKeyframe = new Keyframe({
   0: {
     transform: [{ rotateZ: '0deg' }],

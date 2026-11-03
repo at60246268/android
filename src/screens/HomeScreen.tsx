@@ -2,10 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { CustomButton } from "../components/CustomButton";
 
-<<<<<<< HEAD
 //Definición de las propiedades (props) que recibe la pantalla
-=======
->>>>>>> main
 interface HomeScreenProps {
   usuario: string;
   totalSolicitudes: number;
@@ -19,10 +16,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToRegister,
   onLogout,
 }) => {
-<<<<<<< HEAD
   // Estado local para almacenar el saludo dinámico según la hora
-=======
->>>>>>> main
   const [saludo, setSaludo] = useState("");
 
   useEffect(() => {
@@ -67,21 +61,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     </View>
   );
 };
-<<<<<<< HEAD
 // Estilos visuales de la pantalla organizados por componentes
-=======
-
->>>>>>> main
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
     padding: 20,
-<<<<<<< HEAD
     justifyContent: "space-between", // Distribuye los bloques verticalmente
-=======
-    justifyContent: "space-between",
->>>>>>> main
   },
   header: {
     marginTop: 40,
@@ -110,11 +96,7 @@ const styles = StyleSheet.create({
     padding: 22,
     borderRadius: 12,
     alignItems: "center",
-<<<<<<< HEAD
     elevation: 2, // Sombra para dispositivos Android
-=======
-    elevation: 2,
->>>>>>> main
   },
   kpiLabel: {
     fontSize: 14,

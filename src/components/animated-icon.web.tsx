@@ -54,6 +54,7 @@ const glowKeyframe = new Keyframe({
   },
 });
 
+/** Renderiza el icono con animaciones de escala, opacidad y rotación usando Keyframes */
 export function AnimatedIcon() {
   return (
     <View style={styles.iconContainer}>
