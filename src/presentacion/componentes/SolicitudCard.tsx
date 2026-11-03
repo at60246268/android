@@ -43,13 +43,8 @@ export const SolicitudCard: React.FC<SolicitudCardProps> = ({ item, onPress }) =
       </View>
 
       <Text style={styles.modelo}>{item.vehiculoModelo}</Text>
-<<<<<<< HEAD
-      <Text style={styles.servicio}> {item.tipoServicio}</Text>
-      <Text style={styles.cliente}> {item.clienteNombre} ({item.telefono})</Text>
-=======
       <Text style={styles.servicio}>🔧 {item.tipoServicio}</Text>
       <Text style={styles.cliente}>👤 {item.clienteNombre} ({item.telefono})</Text>
->>>>>>> main
 
       <Text style={styles.fecha}>Registrado: {item.fechaRegistro}</Text>
     </TouchableOpacity>

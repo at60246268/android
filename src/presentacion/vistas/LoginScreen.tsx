@@ -42,11 +42,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       style={styles.container}
     >
       <View style={styles.card}>
-<<<<<<< HEAD
-        <Text style={styles.brand}> AutoFix Manager</Text>
-=======
         <Text style={styles.brand}>🔧 AutoFix Manager</Text>
->>>>>>> main
         <Text style={styles.title}>Iniciar Sesión</Text>
         <Text style={styles.subtitle}>Gestión de Solicitudes y Taller</Text>
 
