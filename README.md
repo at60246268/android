@@ -36,14 +36,28 @@ autofix-app/
 │   │   └── index.tsx            # Navegación y estado central
 │   ├── domain/
 │   │   └── Solicitud.ts         # Datos de la solicitud automotriz
+<<<<<<< HEAD
+=======
+│   ├── infraestructura/
+│   │   └── context/
+│   │       ├── AuthContext.tsx          # Manejo de la sesión del usuario
+│   │       └── SolicitudesContext.tsx   # Manejo de las solicitudes
+>>>>>>> main
 │   ├── presentacion/
 │   │   ├── componentes/         # Componentes reutilizables
 │   │   │   ├── CustomButton.tsx # Botón táctil con variantes
 │   │   │   └── CustomInput.tsx  # Campo de texto con labels y errores
 │   │   └── vistas/              # Pantallas de la aplicación
+<<<<<<< HEAD
 │   │       ├── LoginScreen.tsx      # Inicio de sesión
 │   │       ├── HomeScreen.tsx       # Pantalla principal
 │   │       └── RegisterScreen.tsx   # Formulario de registro
+=======
+│   │       ├── LoginScreen.tsx          # Inicio de sesión
+│   │       ├── HomeScreen.tsx           # Pantalla principal
+│   │       ├── RegisterScreen.tsx       # Formulario de solicitud
+│   │       └── RegisterUserScreen.tsx   # Registro de usuario
+>>>>>>> main
 │   ├── shared/
 │   │   └── theme.ts             # Estilos y tema compartidos
 │   └── global.css
