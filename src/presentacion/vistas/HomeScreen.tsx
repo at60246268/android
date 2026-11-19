@@ -14,6 +14,7 @@ import { useSolicitudes } from "../../infrastructura/context/SolicitudesContext"
 interface Props {
   onNavigateToList: () => void;
   onNavigateToRegister: () => void;
+  onNavigateToClima: () => void;
   onLogout: () => void;
 }
 
@@ -27,6 +28,7 @@ const tipsMecanica = [
 export const HomeScreen: React.FC<Props> = ({
   onNavigateToList,
   onNavigateToRegister,
+  onNavigateToClima,
   onLogout,
 }) => {
   const { state } = useAuth();
@@ -159,6 +161,23 @@ export const HomeScreen: React.FC<Props> = ({
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       )}
+
+      <TouchableOpacity
+        style={styles.actionCardDark}
+        onPress={onNavigateToClima}
+        activeOpacity={0.8}
+      >
+        <View style={styles.actionIconBadge}>
+          <Ionicons name="partly-sunny-outline" size={20} color="#FF5722" />
+        </View>
+        <View style={styles.actionTextCol}>
+          <Text style={styles.actionTitle}>Clima en sede</Text>
+          <Text style={styles.actionSub}>
+            Consulta meteorológica en tiempo real
+          </Text>
+        </View>
+        <Ionicons name="arrow-forward" size={18} color="#6B7280" />
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
         <Ionicons name="log-out-outline" size={18} color="#9CA3AF" />

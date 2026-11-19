@@ -1,10 +1,13 @@
+import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 
 import { AuthProvider, useAuth } from "../infrastructura/context/AuthContext";
+import { inicializarBaseDatos } from "../infrastructura/context/database/database";
 import { SolicitudesProvider } from "../infrastructura/context/SolicitudesContext";
 
+import { ClimaScreen } from "../presentacion/vistas/ClimaScreen";
 import { HomeScreen } from "../presentacion/vistas/HomeScreen";
 import { LoginScreen } from "../presentacion/vistas/LoginScreen";
 import { RegisterUserScreen } from "../presentacion/vistas/RegisterUserScreen";
@@ -14,15 +17,17 @@ import { SolicitudFormScreen } from "../presentacion/vistas/SolicitudFormScreen"
 
 import { SolicitudAuto } from "../domain/Solicitud";
 
-type Vista = "home" | "list" | "create" | "detail" | "registerUser";
+type Vista = "home" | "list" | "create" | "detail" | "registerUser" | "clima";
 
 function AppNavigation() {
-  const { dispatch: dispatchAuth } = useAuth();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { state: authState, dispatch: dispatchAuth } = useAuth();
   const [vistaActual, setVistaActual] = useState<Vista>("home");
   const [historial, setHistorial] = useState<Vista[]>([]);
   const [solicitudSeleccionada, setSolicitudSeleccionada] =
     useState<SolicitudAuto | null>(null);
+
+  const tieneSesionValida =
+    authState.isLoggedIn && Boolean(authState.accessToken);
 
   const navegarA = (vista: Vista) => {
     setHistorial((anterior) => [...anterior, vistaActual]);
@@ -39,10 +44,9 @@ function AppNavigation() {
     setHistorial([]);
     setVistaActual("home");
     dispatchAuth({ type: "LOGOUT" });
-    setIsLoggedIn(false);
   };
 
-  if (!isLoggedIn) {
+  if (!tieneSesionValida) {
     if (vistaActual === "registerUser") {
       return <RegisterUserScreen onBackToLogin={volver} />;
     }
@@ -51,7 +55,6 @@ function AppNavigation() {
         onLoginSuccess={() => {
           setHistorial([]);
           setVistaActual("home");
-          setIsLoggedIn(true);
         }}
         onNavigateToRegisterUser={() => navegarA("registerUser")}
       />
@@ -69,6 +72,7 @@ function AppNavigation() {
             setSolicitudSeleccionada(null);
             navegarA("create");
           }}
+          onNavigateToClima={() => navegarA("clima")}
           onLogout={cerrarSesion}
         />
       )}
@@ -104,17 +108,24 @@ function AppNavigation() {
           }}
         />
       )}
+
+      {vistaActual === "clima" && <ClimaScreen onBack={volver} />}
     </SafeAreaView>
   );
 }
 
 export default function Index() {
   return (
-    <AuthProvider>
-      <SolicitudesProvider>
-        <AppNavigation />
-      </SolicitudesProvider>
-    </AuthProvider>
+    <SQLiteProvider
+      databaseName="autofix_local.db"
+      onInit={inicializarBaseDatos}
+    >
+      <AuthProvider>
+        <SolicitudesProvider>
+          <AppNavigation />
+        </SolicitudesProvider>
+      </AuthProvider>
+    </SQLiteProvider>
   );
 }
 
