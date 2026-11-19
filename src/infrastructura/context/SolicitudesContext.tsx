@@ -1,68 +1,23 @@
-import React, { createContext, useContext, useReducer } from "react";
+import { useSQLiteContext } from "expo-sqlite";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { EstadoAuto, SolicitudAuto } from "../../domain/Solicitud";
-
-type Action =
-  | { type: "ADD_SOLICITUD"; payload: SolicitudAuto }
-  | { type: "UPDATE_SOLICITUD"; payload: SolicitudAuto }
-  | { type: "DELETE_SOLICITUD"; payload: string }
-  | { type: "CHANGE_STATUS"; payload: { id: string; estado: EstadoAuto } }
-  | { type: "SEND_MESSAGE"; payload: { id: string; mensaje: string } };
-
-const solicitudesIniciales: SolicitudAuto[] = [
-  {
-    id: "1",
-    clienteNombre: "JOSE",
-    telefono: "982371347",
-    vehiculoPlaca: "ABC-123",
-    vehiculoModelo: "Toyota Corolla 2020",
-    tipoServicio: "Diagnóstico general",
-    prioridad: "Media",
-    descripcion:
-      "Ruido metálico al frenar en frío y baja presión de neumáticos.",
-    estado: "EN_PROCESO",
-    fechaRegistro: "05/11/2026",
-    usuarioCliente: "jose@gmail.com",
-    mensajeAdmin: "Su vehículo se encuentra en rampa de inspección.",
-  },
-];
-
-function solicitudesReducer(
-  state: SolicitudAuto[],
-  action: Action,
-): SolicitudAuto[] {
-  switch (action.type) {
-    case "ADD_SOLICITUD":
-      return [action.payload, ...state];
-    case "UPDATE_SOLICITUD":
-      return state.map((item) =>
-        item.id === action.payload.id ? action.payload : item,
-      );
-    case "DELETE_SOLICITUD":
-      return state.filter((item) => item.id !== action.payload);
-    case "CHANGE_STATUS":
-      return state.map((item) =>
-        item.id === action.payload.id
-          ? { ...item, estado: action.payload.estado }
-          : item,
-      );
-    case "SEND_MESSAGE":
-      return state.map((item) =>
-        item.id === action.payload.id
-          ? { ...item, mensajeAdmin: action.payload.mensaje }
-          : item,
-      );
-    default:
-      return state;
-  }
-}
+import { solicitudRepository } from "./database/solicitudRepository";
 
 interface SolicitudesContextType {
   solicitudes: SolicitudAuto[];
-  agregarSolicitud: (solicitud: SolicitudAuto) => void;
-  actualizarSolicitud: (solicitud: SolicitudAuto) => void;
-  eliminarSolicitud: (id: string) => void;
-  cambiarEstado: (id: string, estado: EstadoAuto) => void;
-  enviarMensajeCliente: (id: string, mensaje: string) => void;
+  cargando: boolean;
+  recargarSolicitudes: () => Promise<void>;
+  agregarSolicitud: (solicitud: SolicitudAuto) => Promise<void>;
+  actualizarSolicitud: (solicitud: SolicitudAuto) => Promise<void>;
+  eliminarSolicitud: (id: string) => Promise<void>;
+  cambiarEstado: (id: string, estado: EstadoAuto) => Promise<void>;
+  enviarMensajeCliente: (id: string, mensaje: string) => Promise<void>;
 }
 
 const SolicitudesContext = createContext<SolicitudesContextType | undefined>(
@@ -72,26 +27,57 @@ const SolicitudesContext = createContext<SolicitudesContextType | undefined>(
 export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [solicitudes, dispatch] = useReducer(
-    solicitudesReducer,
-    solicitudesIniciales,
-  );
+  const db = useSQLiteContext();
+  const [solicitudes, setSolicitudes] = useState<SolicitudAuto[]>([]);
+  const [cargando, setCargando] = useState<boolean>(true);
 
-  const agregarSolicitud = (solicitud: SolicitudAuto) =>
-    dispatch({ type: "ADD_SOLICITUD", payload: solicitud });
-  const actualizarSolicitud = (solicitud: SolicitudAuto) =>
-    dispatch({ type: "UPDATE_SOLICITUD", payload: solicitud });
-  const eliminarSolicitud = (id: string) =>
-    dispatch({ type: "DELETE_SOLICITUD", payload: id });
-  const cambiarEstado = (id: string, estado: EstadoAuto) =>
-    dispatch({ type: "CHANGE_STATUS", payload: { id, estado } });
-  const enviarMensajeCliente = (id: string, mensaje: string) =>
-    dispatch({ type: "SEND_MESSAGE", payload: { id, mensaje } });
+  const recargarSolicitudes = useCallback(async () => {
+    try {
+      setCargando(true);
+      const data = await solicitudRepository.listar(db);
+      setSolicitudes(data);
+    } catch (error) {
+      console.error("[SQLITE LISTAR ERROR]", error);
+    } finally {
+      setCargando(false);
+    }
+  }, [db]);
+
+  useEffect(() => {
+    recargarSolicitudes();
+  }, [recargarSolicitudes]);
+
+  const agregarSolicitud = async (solicitud: SolicitudAuto) => {
+    await solicitudRepository.crear(db, solicitud);
+    await recargarSolicitudes();
+  };
+
+  const actualizarSolicitud = async (solicitud: SolicitudAuto) => {
+    await solicitudRepository.actualizar(db, solicitud);
+    await recargarSolicitudes();
+  };
+
+  const eliminarSolicitud = async (id: string) => {
+    await solicitudRepository.eliminar(db, id);
+    await recargarSolicitudes();
+  };
+
+  const cambiarEstado = async (id: string, estado: EstadoAuto) => {
+    await solicitudRepository.cambiarEstado(db, id, estado);
+    await recargarSolicitudes();
+  };
+
+  const enviarMensajeCliente = async (id: string, mensaje: string) => {
+    await solicitudRepository.enviarMensaje(db, id, mensaje);
+    await recargarSolicitudes();
+  };
 
   return (
     <SolicitudesContext.Provider
       value={{
         solicitudes,
+        cargando,
+        recargarSolicitudes,
         agregarSolicitud,
         actualizarSolicitud,
         eliminarSolicitud,

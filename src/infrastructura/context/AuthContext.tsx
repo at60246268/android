@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer } from "react";
 
 export type RolUsuario = "cliente" | "admin";
+export type EstadoSesion = "guest" | "checking" | "auth" | "error";
 
 export interface Usuario {
   usuario: string;
@@ -9,39 +10,82 @@ export interface Usuario {
   telefono?: string;
 }
 
+interface UsuarioRegistrado extends Usuario {
+  password: string;
+}
+
 interface AuthState {
+  status: EstadoSesion;
   isLoggedIn: boolean;
+  accessToken: string | null;
   usuarioActual: Usuario | null;
-  usuariosRegistrados: {
-    usuario: string;
-    password: string;
-    nombre: string;
-    rol: RolUsuario;
-    telefono?: string;
-  }[];
+  error: string | null;
+  usuariosRegistrados: UsuarioRegistrado[];
 }
 
 type AuthAction =
-  | { type: "LOGIN"; payload: Usuario }
+  | { type: "AUTH_CHECKING" }
+  | { type: "LOGIN"; payload: Usuario; token?: string }
+  | { type: "AUTH_ERROR"; payload: string }
   | { type: "LOGOUT" }
   | {
       type: "REGISTRAR_USUARIO";
-      payload: {
-        usuario: string;
-        password: string;
-        nombre: string;
-        rol: RolUsuario;
-        telefono?: string;
-      };
+      payload: UsuarioRegistrado;
     };
+
+function generarAccessToken(usuario: Usuario): string {
+  const timestamp = Date.now();
+  const firma = `${usuario.usuario}:${usuario.rol}:${timestamp}`;
+  return `autofix_tk_${btoa(firma).replace(/=/g, "")}`;
+}
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
-    case "LOGIN":
-      return { ...state, isLoggedIn: true, usuarioActual: action.payload };
+    case "AUTH_CHECKING":
+      return {
+        ...state,
+        status: "checking",
+        error: null,
+      };
+    case "LOGIN": {
+      const token = action.token ?? generarAccessToken(action.payload);
+      console.log(
+        `[AUTH LOGIN] Usuario: ${action.payload.usuario} | Rol: ${action.payload.rol} | Token generado`,
+      );
+      return {
+        ...state,
+        status: "auth",
+        isLoggedIn: true,
+        accessToken: token,
+        usuarioActual: action.payload,
+        error: null,
+      };
+    }
+    case "AUTH_ERROR":
+      console.error("[AUTH ERROR]", action.payload);
+      return {
+        ...state,
+        status: "error",
+        isLoggedIn: false,
+        accessToken: null,
+        usuarioActual: null,
+        error: action.payload,
+      };
     case "LOGOUT":
-      return { ...state, isLoggedIn: false, usuarioActual: null };
+      console.log("[AUTH LOGOUT] Sesión cerrada y accessToken revocado");
+      return {
+        ...state,
+        status: "guest",
+        isLoggedIn: false,
+        accessToken: null,
+        usuarioActual: null,
+        error: null,
+      };
     case "REGISTRAR_USUARIO":
+      console.log(
+        "[AUTH REGISTER] Nuevo usuario registrado:",
+        action.payload.usuario,
+      );
       return {
         ...state,
         usuariosRegistrados: [action.payload, ...state.usuariosRegistrados],
@@ -52,8 +96,11 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 };
 
 const initialAuthState: AuthState = {
+  status: "guest",
   isLoggedIn: false,
+  accessToken: null,
   usuarioActual: null,
+  error: null,
   usuariosRegistrados: [
     {
       usuario: "admin@autofix.com",
@@ -71,21 +118,31 @@ const initialAuthState: AuthState = {
   ],
 };
 
-const AuthContext = createContext<
-  | {
-      state: AuthState;
-      dispatch: React.Dispatch<AuthAction>;
-    }
-  | undefined
->(undefined);
+interface AuthContextType {
+  state: AuthState;
+  dispatch: React.Dispatch<AuthAction>;
+  getAuthHeaders: () => Record<string, string>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
 
+  const getAuthHeaders = (): Record<string, string> => {
+    if (!state.accessToken) {
+      return { "Content-Type": "application/json" };
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${state.accessToken}`,
+    };
+  };
+
   return (
-    <AuthContext.Provider value={{ state, dispatch }}>
+    <AuthContext.Provider value={{ state, dispatch, getAuthHeaders }}>
       {children}
     </AuthContext.Provider>
   );
