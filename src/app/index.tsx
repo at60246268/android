@@ -17,8 +17,10 @@ import { SolicitudFormScreen } from "../presentacion/vistas/SolicitudFormScreen"
 
 import { SolicitudAuto } from "../domain/Solicitud";
 
+// Definición del tipo de vista que puede tener la aplicación
 type Vista = "home" | "list" | "create" | "detail" | "registerUser" | "clima";
 
+// Componente que maneja la navegación entre las diferentes vistas de la aplicación
 function AppNavigation() {
   const { state: authState, dispatch: dispatchAuth } = useAuth();
   const [vistaActual, setVistaActual] = useState<Vista>("home");
@@ -26,26 +28,31 @@ function AppNavigation() {
   const [solicitudSeleccionada, setSolicitudSeleccionada] =
     useState<SolicitudAuto | null>(null);
 
+  // Verifica si el usuario tiene una sesión válida (está logueado y tiene un token de acceso)
   const tieneSesionValida =
     authState.isLoggedIn && Boolean(authState.accessToken);
 
+  // Función para navegar a una vista específica y agregar la vista actual al historial de navegación
   const navegarA = (vista: Vista) => {
     setHistorial((anterior) => [...anterior, vistaActual]);
     setVistaActual(vista);
   };
 
+  // Función para volver a la vista anterior en el historial de navegación
   const volver = () => {
     const vistaAnterior = historial[historial.length - 1] ?? "home";
     setHistorial((anterior) => anterior.slice(0, -1));
     setVistaActual(vistaAnterior);
   };
 
+  // Función para cerrar sesión, limpiar el historial y volver a la vista de inicio
   const cerrarSesion = () => {
     setHistorial([]);
     setVistaActual("home");
     dispatchAuth({ type: "LOGOUT" });
   };
 
+  // Renderizar las vistas de autenticación si el usuario no tiene sesión válida
   if (!tieneSesionValida) {
     if (vistaActual === "registerUser") {
       return <RegisterUserScreen onBackToLogin={volver} />;
@@ -60,7 +67,8 @@ function AppNavigation() {
       />
     );
   }
-
+  
+  // Renderizar las vistas principales de la aplicación cuando el usuario tiene sesión válida
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -114,6 +122,7 @@ function AppNavigation() {
   );
 }
 
+// Componente principal de la aplicación que envuelve la navegación y los proveedores de contexto
 export default function Index() {
   return (
     <SQLiteProvider
@@ -129,6 +138,7 @@ export default function Index() {
   );
 }
 
+// Estilos para el contenedor principal de la aplicación
 const styles = StyleSheet.create({
   container: {
     flex: 1,
