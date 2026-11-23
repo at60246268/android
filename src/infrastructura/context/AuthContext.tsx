@@ -104,8 +104,8 @@ const initialAuthState: AuthState = {
   usuariosRegistrados: [
     {
       usuario: "admin@autofix.com",
-      password: "123456",
-      nombre: "JOSE",
+      password: "admin",
+      nombre: "ALEX",
       rol: "admin",
     },
     {
