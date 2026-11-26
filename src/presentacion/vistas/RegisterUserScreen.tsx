@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -15,20 +17,31 @@ import { useAuth } from "../../infrastructura/context/AuthContext";
 import { CustomInput } from "../componentes/CustomInput";
 
 interface RegisterUserScreenProps {
-  onBackToLogin: () => void;
+  onBackToLogin?: () => void;
 }
 
 export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
   onBackToLogin,
 }) => {
-  const { dispatch } = useAuth();
+  const { state, registrarConFirebase } = useAuth();
+  const router = useRouter();
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleRegistrar = () => {
+  const cargando = state.status === "checking";
+
+  const volverALogin = () => {
+    if (onBackToLogin) {
+      onBackToLogin();
+    } else {
+      router.replace("/(auth)/login" as any);
+    }
+  };
+
+  const handleRegistrar = async () => {
     if (
       !nombre.trim() ||
       !telefono.trim() ||
@@ -39,22 +52,28 @@ export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
       return;
     }
 
-    dispatch({
-      type: "REGISTRAR_USUARIO",
-      payload: {
-        usuario: correo.trim().toLowerCase(),
-        password: password,
-        nombre: nombre.trim(),
-        rol: "cliente",
-        telefono: telefono.trim(),
-      },
-    });
+    if (password.length < 6) {
+      setErrorMsg("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
 
-    Alert.alert(
-      "Cuenta Creada",
-      "Tu cuenta fue registrada correctamente. Ya puedes iniciar sesión.",
-    );
-    onBackToLogin();
+    setErrorMsg("");
+    try {
+      await registrarConFirebase({
+        email: correo,
+        password,
+        nombre,
+        telefono,
+      });
+
+      Alert.alert(
+        "Cuenta Creada",
+        "Tu cuenta fue registrada correctamente en Firebase.",
+      );
+      router.replace("/(tabs)" as any);
+    } catch (error: any) {
+      setErrorMsg(error?.message || "No se pudo registrar la cuenta.");
+    }
   };
 
   return (
@@ -116,18 +135,28 @@ export const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({
 
           <CustomInput
             label="CONTRASEÑA"
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Mínimo 6 caracteres"
             value={password}
             onChangeText={setPassword}
             isPassword
           />
 
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleRegistrar}>
-            <Text style={styles.btnText}>Crear mi cuenta</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          <TouchableOpacity
+            style={[styles.primaryBtn, cargando && { opacity: 0.7 }]}
+            onPress={handleRegistrar}
+            disabled={cargando}
+          >
+            {cargando ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Text style={styles.btnText}>Crear mi cuenta</Text>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              </>
+            )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={onBackToLogin} style={styles.linkBtn}>
+          <TouchableOpacity onPress={volverALogin} style={styles.linkBtn}>
             <Text style={styles.linkText}>
               Ya tengo una cuenta. Iniciar sesión
             </Text>
