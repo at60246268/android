@@ -18,6 +18,7 @@ import { EstadoAuto, SolicitudAuto } from "../../domain/Solicitud";
 import { solicitudRepository } from "./database/solicitudRepository";
 import { db as firestoreDb } from "./services/firebaseConfig";
 
+//Operaciones y estado expuestos por el contexto de solicitudes
 interface SolicitudesContextType {
   solicitudes: SolicitudAuto[];
   cargando: boolean;
@@ -33,6 +34,7 @@ const SolicitudesContext = createContext<SolicitudesContextType | undefined>(
   undefined,
 );
 
+//Proveedor que coordina la persistencia local en SQLite y la sincronización con Firestore
 export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -40,6 +42,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
   const [solicitudes, setSolicitudes] = useState<SolicitudAuto[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
 
+  //Lee las solicitudes desde SQLite; reintenta brevemente si la conexión aún se está abriendo/cerrando
   const recargarSolicitudes = useCallback(async () => {
     try {
       setCargando(true);
@@ -61,6 +64,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [sqliteDb]);
 
+  //Carga inicial desde SQLite y escucha cambios en tiempo real en Firestore
   useEffect(() => {
     recargarSolicitudes();
 
@@ -68,6 +72,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
     const unsubscribe = onSnapshot(
       solicitudesCol,
       (snapshot) => {
+        //Si hay datos en la nube, los reemplaza; si no, mantiene los locales
         if (!snapshot.empty) {
           const remotas: SolicitudAuto[] = snapshot.docs.map(
             (documento) => documento.data() as SolicitudAuto,
@@ -80,6 +85,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
         setCargando(false);
       },
       (error) => {
+        //Si falla la conexión a Firestore, se mantiene la copia local y se notifica
         console.warn(
           "[FIRESTORE OFFLINE] Operando con respaldo local SQLite:",
           error.message,
@@ -88,9 +94,11 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
       },
     );
 
+    //Cancela la suscripción a Firestore al desmontar o cambiar dependencias
     return () => unsubscribe();
   }, [recargarSolicitudes]);
 
+  //Crea la solicitud primero en SQLite y luego replica el documento en Firestore
   const agregarSolicitud = async (solicitud: SolicitudAuto) => {
     await solicitudRepository.crear(sqliteDb, solicitud);
     await recargarSolicitudes();
@@ -107,6 +115,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //Actualiza el registro local y hace merge en Firestore para conservar campos no incluidos
   const actualizarSolicitud = async (solicitud: SolicitudAuto) => {
     await solicitudRepository.actualizar(sqliteDb, solicitud);
     await recargarSolicitudes();
@@ -125,6 +134,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //Elimina la solicitud en SQLite y borra su documento correspondiente en Firestore
   const eliminarSolicitud = async (id: string) => {
     await solicitudRepository.eliminar(sqliteDb, id);
     await recargarSolicitudes();
@@ -136,6 +146,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //Actualiza únicamente el estado del vehículo/solicitud en local y en la nube
   const cambiarEstado = async (id: string, estado: EstadoAuto) => {
     await solicitudRepository.cambiarEstado(sqliteDb, id, estado);
     await recargarSolicitudes();
@@ -146,7 +157,8 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("[FIRESTORE ESTADO ERROR]", error);
     }
   };
-
+ 
+  //Registra un mensaje del taller hacia el cliente en SQLite y Firestore
   const enviarMensajeCliente = async (id: string, mensaje: string) => {
     await solicitudRepository.enviarMensaje(sqliteDb, id, mensaje);
     await recargarSolicitudes();
@@ -178,6 +190,7 @@ export const SolicitudesProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+//Hook para acceder al contexto de solicitudes dentro del árbol de componentes
 export const useSolicitudes = () => {
   const context = useContext(SolicitudesContext);
   if (!context)
