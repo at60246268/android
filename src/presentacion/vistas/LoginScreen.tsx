@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -14,7 +16,7 @@ import { useAuth } from "../../infrastructura/context/AuthContext";
 import { CustomInput } from "../componentes/CustomInput";
 
 interface LoginScreenProps {
-  onLoginSuccess: (usuarioNombre: string) => void;
+  onLoginSuccess?: (usuarioNombre: string) => void;
   onNavigateToRegisterUser?: () => void;
 }
 
@@ -22,37 +24,41 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
   onNavigateToRegisterUser,
 }) => {
-  const { state, dispatch } = useAuth();
+  const { state, loginConFirebase } = useAuth();
+  const router = useRouter();
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleIngresar = () => {
+  const cargando = state.status === "checking";
+
+  const handleIngresar = async () => {
     if (!correo.trim() || !password.trim()) {
       setErrorMsg("Completa todos los campos obligatorios.");
       return;
     }
 
-    const encontrado = state.usuariosRegistrados.find(
-      (u) =>
-        u.usuario.toLowerCase() === correo.trim().toLowerCase() &&
-        u.password === password,
-    );
+    setErrorMsg("");
+    try {
+      await loginConFirebase(correo, password);
+      if (onLoginSuccess) {
+        onLoginSuccess(correo.trim());
+      } else {
+        router.replace("/(tabs)" as any);
+      }
+    } catch (error: any) {
+      setErrorMsg(
+        error?.message ||
+          "Credenciales incorrectas. Verifica correo o contraseña.",
+      );
+    }
+  };
 
-    if (encontrado) {
-      setErrorMsg("");
-      dispatch({
-        type: "LOGIN",
-        payload: {
-          usuario: encontrado.usuario,
-          nombre: encontrado.nombre,
-          rol: encontrado.rol,
-          telefono: encontrado.telefono,
-        },
-      });
-      onLoginSuccess(encontrado.nombre);
+  const irARegistro = () => {
+    if (onNavigateToRegisterUser) {
+      onNavigateToRegisterUser();
     } else {
-      setErrorMsg("Credenciales incorrectas. Verifica correo o contraseña.");
+      router.push("/(auth)/register" as any);
     }
   };
 
@@ -100,27 +106,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
           <CustomInput
             label="CONTRASEÑA"
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Mínimo 6 caracteres"
             value={password}
             onChangeText={setPassword}
             isPassword
           />
 
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleIngresar}>
-            <Text style={styles.btnText}>Ingresar a mi cuenta</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          <TouchableOpacity
+            style={[styles.primaryBtn, cargando && { opacity: 0.7 }]}
+            onPress={handleIngresar}
+            disabled={cargando}
+          >
+            {cargando ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Text style={styles.btnText}>Ingresar a mi cuenta</Text>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              </>
+            )}
           </TouchableOpacity>
 
-          {onNavigateToRegisterUser && (
-            <TouchableOpacity
-              onPress={onNavigateToRegisterUser}
-              style={styles.linkBtn}
-            >
-              <Text style={styles.linkText}>
-                ¿Primera vez? Crear una cuenta
-              </Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={irARegistro} style={styles.linkBtn}>
+            <Text style={styles.linkText}>¿Primera vez? Crear una cuenta</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

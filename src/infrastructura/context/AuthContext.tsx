@@ -1,17 +1,23 @@
-import React, { createContext, useContext, useReducer } from "react";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import React, { createContext, useContext, useEffect, useReducer } from "react";
+import { auth, db } from "./services/firebaseConfig";
 
 export type RolUsuario = "cliente" | "admin";
 export type EstadoSesion = "guest" | "checking" | "auth" | "error";
 
 export interface Usuario {
+  uid?: string;
   usuario: string;
   nombre: string;
   rol: RolUsuario;
   telefono?: string;
-}
-
-interface UsuarioRegistrado extends Usuario {
-  password: string;
 }
 
 interface AuthState {
@@ -20,24 +26,13 @@ interface AuthState {
   accessToken: string | null;
   usuarioActual: Usuario | null;
   error: string | null;
-  usuariosRegistrados: UsuarioRegistrado[];
 }
 
 type AuthAction =
   | { type: "AUTH_CHECKING" }
-  | { type: "LOGIN"; payload: Usuario; token?: string }
+  | { type: "LOGIN"; payload: Usuario; token: string }
   | { type: "AUTH_ERROR"; payload: string }
-  | { type: "LOGOUT" }
-  | {
-      type: "REGISTRAR_USUARIO";
-      payload: UsuarioRegistrado;
-    };
-
-function generarAccessToken(usuario: Usuario): string {
-  const timestamp = Date.now();
-  const firma = `${usuario.usuario}:${usuario.rol}:${timestamp}`;
-  return `autofix_tk_${btoa(firma).replace(/=/g, "")}`;
-}
+  | { type: "LOGOUT" };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
@@ -48,21 +43,20 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         error: null,
       };
     case "LOGIN": {
-      const token = action.token ?? generarAccessToken(action.payload);
       console.log(
-        `[AUTH LOGIN] Usuario: ${action.payload.usuario} | Rol: ${action.payload.rol} | Token generado`,
+        `[FIREBASE AUTH LOGIN] Usuario: ${action.payload.usuario} | Rol: ${action.payload.rol}`,
       );
       return {
         ...state,
         status: "auth",
         isLoggedIn: true,
-        accessToken: token,
+        accessToken: action.token,
         usuarioActual: action.payload,
         error: null,
       };
     }
     case "AUTH_ERROR":
-      console.error("[AUTH ERROR]", action.payload);
+      console.warn("[FIREBASE AUTH ERROR]", action.payload);
       return {
         ...state,
         status: "error",
@@ -72,7 +66,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         error: action.payload,
       };
     case "LOGOUT":
-      console.log("[AUTH LOGOUT] Sesión cerrada y accessToken revocado");
+      console.log("[FIREBASE AUTH LOGOUT] Sesión cerrada");
       return {
         ...state,
         status: "guest",
@@ -81,46 +75,30 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         usuarioActual: null,
         error: null,
       };
-    case "REGISTRAR_USUARIO":
-      console.log(
-        "[AUTH REGISTER] Nuevo usuario registrado:",
-        action.payload.usuario,
-      );
-      return {
-        ...state,
-        usuariosRegistrados: [action.payload, ...state.usuariosRegistrados],
-      };
     default:
       return state;
   }
 };
 
 const initialAuthState: AuthState = {
-  status: "guest",
+  status: "checking",
   isLoggedIn: false,
   accessToken: null,
   usuarioActual: null,
   error: null,
-  usuariosRegistrados: [
-    {
-      usuario: "admin@autofix.com",
-      password: "123456",
-      nombre: "JOSE",
-      rol: "admin",
-    },
-    {
-      usuario: "jose@gmail.com",
-      password: "123456",
-      nombre: "JOSE",
-      rol: "cliente",
-      telefono: "982371347",
-    },
-  ],
 };
 
 interface AuthContextType {
   state: AuthState;
   dispatch: React.Dispatch<AuthAction>;
+  loginConFirebase: (email: string, password: string) => Promise<void>;
+  registrarConFirebase: (datos: {
+    email: string;
+    password: string;
+    nombre: string;
+    telefono: string;
+  }) => Promise<void>;
+  logoutConFirebase: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;
 }
 
@@ -130,6 +108,123 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser || !firebaseUser.email) {
+        dispatch({ type: "LOGOUT" });
+        return;
+      }
+
+      try {
+        const token = await firebaseUser.getIdToken();
+        const emailLower = firebaseUser.email.toLowerCase();
+        const esAdmin = emailLower === "admin@autofix.com";
+
+        let nombre =
+          firebaseUser.displayName || emailLower.split("@")[0].toUpperCase();
+        let telefono = "";
+        let rol: RolUsuario = esAdmin ? "admin" : "cliente";
+
+        const perfilRef = doc(db, "usuarios", firebaseUser.uid);
+        const perfilSnap = await getDoc(perfilRef);
+
+        if (perfilSnap.exists()) {
+          const data = perfilSnap.data();
+          nombre = data.nombre || nombre;
+          telefono = data.telefono || "";
+          rol = esAdmin ? "admin" : (data.rol as RolUsuario) || "cliente";
+        }
+
+        dispatch({
+          type: "LOGIN",
+          token,
+          payload: {
+            uid: firebaseUser.uid,
+            usuario: emailLower,
+            nombre,
+            rol,
+            telefono,
+          },
+        });
+      } catch (error: any) {
+        dispatch({
+          type: "AUTH_ERROR",
+          payload: error?.message || "Error al validar sesión en Firebase",
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const loginConFirebase = async (email: string, password: string) => {
+    dispatch({ type: "AUTH_CHECKING" });
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+    } catch (error: any) {
+      let mensaje = "Credenciales incorrectas o usuario no encontrado";
+      if (error?.code === "auth/invalid-credential") {
+        mensaje = "Correo o contraseña incorrectos";
+      } else if (error?.code === "auth/too-many-requests") {
+        mensaje = "Demasiados intentos fallidos. Intenta más tarde";
+      }
+      dispatch({ type: "AUTH_ERROR", payload: mensaje });
+      throw new Error(mensaje);
+    }
+  };
+
+  const registrarConFirebase = async ({
+    email,
+    password,
+    nombre,
+    telefono,
+  }: {
+    email: string;
+    password: string;
+    nombre: string;
+    telefono: string;
+  }) => {
+    dispatch({ type: "AUTH_CHECKING" });
+    try {
+      const emailLimpio = email.trim().toLowerCase();
+      const credencial = await createUserWithEmailAndPassword(
+        auth,
+        emailLimpio,
+        password,
+      );
+
+      await updateProfile(credencial.user, {
+        displayName: nombre.trim().toUpperCase(),
+      });
+
+      const rolAsignado: RolUsuario =
+        emailLimpio === "admin@autofix.com" ? "admin" : "cliente";
+
+      await setDoc(doc(db, "usuarios", credencial.user.uid), {
+        uid: credencial.user.uid,
+        usuario: emailLimpio,
+        nombre: nombre.trim().toUpperCase(),
+        telefono: telefono.trim(),
+        rol: rolAsignado,
+        creadoEn: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      let mensaje = "No se pudo registrar la cuenta";
+      if (error?.code === "auth/email-already-in-use") {
+        mensaje = "Este correo ya está registrado en Firebase";
+      } else if (error?.code === "auth/weak-password") {
+        mensaje = "La contraseña debe tener al menos 6 caracteres";
+      }
+      dispatch({ type: "AUTH_ERROR", payload: mensaje });
+      throw new Error(mensaje);
+    }
+  };
+
+  const logoutConFirebase = async () => {
+    await signOut(auth);
+    dispatch({ type: "LOGOUT" });
+  };
 
   const getAuthHeaders = (): Record<string, string> => {
     if (!state.accessToken) {
@@ -142,7 +237,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <AuthContext.Provider value={{ state, dispatch, getAuthHeaders }}>
+    <AuthContext.Provider
+      value={{
+        state,
+        dispatch,
+        loginConFirebase,
+        registrarConFirebase,
+        logoutConFirebase,
+        getAuthHeaders,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
