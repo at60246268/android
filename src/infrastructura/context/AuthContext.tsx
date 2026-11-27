@@ -5,13 +5,16 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
+//Roles disponibles en la aplicación y estados posibles de la sesión
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useReducer } from "react";
 import { auth, db } from "./services/firebaseConfig";
 
+//Estructura del perfil de usuario combinado (Auth + Firestore)
 export type RolUsuario = "cliente" | "admin";
 export type EstadoSesion = "guest" | "checking" | "auth" | "error";
 
+//Estructura del perfil de usuario combinado (Auth + Firestore)
 export interface Usuario {
   uid?: string;
   usuario: string;
@@ -20,6 +23,7 @@ export interface Usuario {
   telefono?: string;
 }
 
+//Estado global de autenticación gestionado por el reducer
 interface AuthState {
   status: EstadoSesion;
   isLoggedIn: boolean;
@@ -28,12 +32,14 @@ interface AuthState {
   error: string | null;
 }
 
+//Acciones permitidas para modificar AuthState
 type AuthAction =
   | { type: "AUTH_CHECKING" }
   | { type: "LOGIN"; payload: Usuario; token: string }
   | { type: "AUTH_ERROR"; payload: string }
   | { type: "LOGOUT" };
 
+//Reducer: centraliza las transiciones de estado según la acción recibida
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case "AUTH_CHECKING":
@@ -80,6 +86,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
+//Estado inicial: comienza en "checking" mientras Firebase verifica la sesión activa
 const initialAuthState: AuthState = {
   status: "checking",
   isLoggedIn: false,
@@ -88,6 +95,7 @@ const initialAuthState: AuthState = {
   error: null,
 };
 
+//Contrato de valores y métodos expuestos por el contexto de autenticación
 interface AuthContextType {
   state: AuthState;
   dispatch: React.Dispatch<AuthAction>;
@@ -104,28 +112,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+//Proveedor de autenticación que envuelve la app y sincroniza con Firebase
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
-
+//Suscripción en tiempo real a cambios de sesión en Firebase Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      //Si no hay usuario autenticado, se restablece el estado a invitado
       if (!firebaseUser || !firebaseUser.email) {
         dispatch({ type: "LOGOUT" });
         return;
       }
 
       try {
+        //Obtiene el ID token actual para autorizar peticiones al backend
         const token = await firebaseUser.getIdToken();
         const emailLower = firebaseUser.email.toLowerCase();
         const esAdmin = emailLower === "admin@autofix.com";
-
+       //Valores por defecto antes de consultar el documento en Firestore
         let nombre =
           firebaseUser.displayName || emailLower.split("@")[0].toUpperCase();
         let telefono = "";
         let rol: RolUsuario = esAdmin ? "admin" : "cliente";
-
+        
+        //Recupera datos adicionales del perfil almacenados en Firestore
         const perfilRef = doc(db, "usuarios", firebaseUser.uid);
         const perfilSnap = await getDoc(perfilRef);
 
@@ -133,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const data = perfilSnap.data();
           nombre = data.nombre || nombre;
           telefono = data.telefono || "";
+          //Prioriza el rol admin si coincide el correo; si no, usa el de Firestore
           rol = esAdmin ? "admin" : (data.rol as RolUsuario) || "cliente";
         }
 
@@ -155,9 +168,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     });
 
+    // Limpieza de la suscripción al desmontar el componente
     return () => unsubscribe();
   }, []);
-
+  
+  //Inicia sesión con correo y contraseña; onAuthStateChanged completará el estado LOGIN
   const loginConFirebase = async (email: string, password: string) => {
     dispatch({ type: "AUTH_CHECKING" });
     try {
@@ -174,6 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //Registra un usuario en Auth, actualiza su displayName y crea su perfil en Firestore
   const registrarConFirebase = async ({
     email,
     password,
@@ -201,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const rolAsignado: RolUsuario =
         emailLimpio === "admin@autofix.com" ? "admin" : "cliente";
 
+        //Guarda el documento inicial del usuario usando su UID como ID de documento
       await setDoc(doc(db, "usuarios", credencial.user.uid), {
         uid: credencial.user.uid,
         usuario: emailLimpio,
@@ -221,11 +238,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //Cierra la sesión en Firebase y limpia el estado local
   const logoutConFirebase = async () => {
     await signOut(auth);
     dispatch({ type: "LOGOUT" });
   };
 
+  //Construye las cabeceras HTTP incluyendo el Bearer token si existe sesión activa
   const getAuthHeaders = (): Record<string, string> => {
     if (!state.accessToken) {
       return { "Content-Type": "application/json" };
@@ -252,6 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+//Hook personalizado para consumir el contexto de autenticación de forma segura
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
